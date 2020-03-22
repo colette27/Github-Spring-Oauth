@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Demo</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width" />
+    <base href="/" />
+    
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.0.4/js.cookie.js"></script>
+<script type="text/javascript">
+
+$.get("/user", function(data) {
+  $("#user").html('<img src="' + data.avatar_url + '"/><br/><h3>' +data.bio+ '</h3>');
+  $(".unauthenticated").hide();
+  $(".authenticated").show();
+});
+
+var logout = function() {
+    $.post("/logout", function() {
+        $("#user").html('');
+        $(".unauthenticated").show();
+        $(".authenticated").hide();
+    })
+    return true;
+}
+
+$.ajaxSetup({
+  beforeSend : function(xhr, settings) {
+    if (settings.type == 'POST' || settings.type == 'PUT'
+        || settings.type == 'DELETE') {
+      if (!(/^http:.*/.test(settings.url) || /^https:.*/
+        .test(settings.url))) {
+        // Only send the token to relative URLs i.e. locally.
+        xhr.setRequestHeader("X-XSRF-TOKEN",
+          Cookies.get('XSRF-TOKEN'));
+      }
+    }
+  }
+});
+    </script>
+  </head>
+  <body>
+    <h1>Login to App using GitHub</h1>
+
+
+
+
+
+    <div class="container unauthenticated">
+      With GitHub: <a href="/oauth2/authorization/github">click here</a>
+    </div>
+    <div class="container authenticated" style="display:none">
+      Logged in as: <span id="user"></span>
+        <button onClick="logout()" class="btn btn-primary">Logout</button>
+      </div>
+    </div>
+  
+  
+  
+  </body>
+</html>
