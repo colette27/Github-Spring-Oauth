@@ -15,13 +15,117 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.0.4/js.cookie.js"></script>
 <script type="text/javascript">
 
+// step one: login authenticating with Oauth
+// step two:  "members_url": "https://api.github.com/teams/1/members{/member}",
+
+// step three: get authorization, put it in header with request 
+
+var myUser = null
+
 $.get("/user", function(data) {
-  $("#user").html('<img src="' + data.avatar_url + '"/><br/><h3>' +data.bio+ '</h3>');
+  myUser = data
+
+  // this is where we need to get the auth token
+  getToken()
+
+  $("#user").html(
+    
+  '<img src="' + data.avatar_url + '"/><br/><h3>' +data.bio+ '</h3>' + 
+  '<a href ="'+ data.repos_url+'">My Repos</a>'
+                   
+    
+  )
+  
   $(".unauthenticated").hide();
   $(".authenticated").show();
 });
 
-var logout = function() {
+
+const getRepos = function(){
+  $.get("https://api.github.com/users/"+myUser.login+"/repos?", function(data){
+
+    $("#repos").html(
+      JSON.stringify(data[3].description)
+    )
+
+  })
+}
+var token = null;
+// Try to get the token FFS
+// POST https://github.com/login/auth/access_token
+
+const getToken = function(){
+  console.log("getting token")
+
+  $.ajax({
+    url: "https://github.com/login/oauth/authorize?client_id=da1d8fcd4d7ba73d8382&client_secret=2c74cbcba9373f754b462f8cc7b8318fda8ca6e0",
+    type: 'GET',
+      success:function(result){
+        console.log(JSON.stringify(result))
+      }
+  })
+
+
+  $.ajax({
+    url: "https://github.com/login/oauth/access_token",
+    type: 'POST',
+    data: {
+      client_id: "da1d8fcd4d7ba73d8382",
+      client_secret: "2c74cbcba9373f754b462f8cc7b8318fda8ca6e0",
+      code: "thissucks",
+      redirect_uri:"http://www.example.com/oauth_redirect"
+    },
+    beforeSend : function(xhr, settings){
+
+
+
+      
+      console.log("before send acess token post")
+    },
+      success:function(result){
+        console.log(JSON.stringify(result))
+      }
+  })
+}
+
+// PUT /orgs/:org/teams/:team_slug/memberships/:username
+
+const addMemberToTeam = function(){
+
+  $.ajax({
+    url: "https://api.github.com/organizations/62528634/team/3719543/memberships/spaceghost69",
+    type: 'PUT',
+    beforeSend : function(xhr, settings) {
+        // Only send the token to relative URLs i.e. locally.
+        console.log("is this running?")
+
+        // xhr.setRequestHeader("Cookie","JSESSIONID=;");
+
+       //  xhr.setRequestHeader("Authorization", "token cd8981a99ca45e77160266de442336b212bb827c");   
+    },
+    success:function(result){
+      $("#teams").html(
+        JSON.stringify(result)
+      )
+    }
+  })
+}
+
+
+
+/* Generally how you could add a new team and then a user to the new team in one call
+const addUserToTeam = function(teamname){
+  $.post("https://api.github.com/team/teamname/", function(data){
+
+    $.post("https://api.github.com/team/"+data.teamName+"/" + myUser.login, function(data){
+    
+      console.log('succesffully added ' + myUser.login + ' to team: ' + data.teamName);
+    })
+
+})
+*/
+
+const logout = function() {
     $.post("/logout", function() {
         $("#user").html('');
         $(".unauthenticated").show();
@@ -30,7 +134,7 @@ var logout = function() {
     return true;
 }
 
-$.ajaxSetup({
+const ajaxconfig = {
   beforeSend : function(xhr, settings) {
     if (settings.type == 'POST' || settings.type == 'PUT'
         || settings.type == 'DELETE') {
@@ -42,7 +146,10 @@ $.ajaxSetup({
       }
     }
   }
-});
+}
+
+$.ajaxSetup(ajaxconfig);
+
     </script>
   </head>
   <body>
@@ -57,7 +164,12 @@ $.ajaxSetup({
     </div>
     <div class="container authenticated" style="display:none">
       Logged in as: <span id="user"></span>
+      Repos are: <span id="repos"></span>
+      Teams are: <span id="teams"></span>
         <button onClick="logout()" class="btn btn-primary">Logout</button>
+        <button onClick="getRepos()" class="btn btn-primary">Fetch Repos</button>
+        <button onClick="addMemberToTeam()" class="btn btn-primary">Add to team</button>
+
       </div>
     </div>
   

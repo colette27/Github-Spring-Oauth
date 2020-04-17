@@ -2,6 +2,7 @@ spring:
   security:
     oauth2:
       client:
+        token_name: code
         registration:
           github:
             clientId: da1d8fcd4d7ba73d8382
